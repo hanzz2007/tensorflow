@@ -26,9 +26,10 @@ option(tensorflow_BUILD_CC_EXAMPLE "Build the C++ tutorial example" ON)
 option(tensorflow_BUILD_PYTHON_BINDINGS "Build the Python bindings" ON)
 option(tensorflow_BUILD_ALL_KERNELS "Build all OpKernels" ON)
 option(tensorflow_BUILD_CONTRIB_KERNELS "Build OpKernels from tensorflow/contrib/..." ON)
-option(tensorflow_BUILD_CC_TESTS "Build cc unit tests " OFF)
-option(tensorflow_BUILD_PYTHON_TESTS "Build python unit tests " OFF)
+option(tensorflow_BUILD_CC_TESTS "Build cc unit tests" OFF)
+option(tensorflow_BUILD_PYTHON_TESTS "Build python unit tests" OFF)
 option(tensorflow_OPTIMIZE_FOR_NATIVE_ARCH "Enable compiler optimizations for the native processor architecture (if available)" ON)
+option(tensorflow_ENABLE_MKL "Build with MKL" OFF)
 
 if (NOT WIN32)
   # Threads: defines CMAKE_THREAD_LIBS_INIT and adds -pthread compile option
@@ -150,6 +151,17 @@ if(tensorflow_ENABLE_GRPC_SUPPORT)
 endif()
 if(WIN32)
   list(APPEND tensorflow_EXTERNAL_LIBRARIES wsock32 ws2_32 shlwapi)
+  if (tensorflow_ENABLE_MKL)
+    add_definitions(-DINTEL_MKL=1)
+    list(APPEND tensorflow_EXTERNAL_LIBRARIES
+      ${MKLROOT}/lib/intel64_win/mkl_intel_lp64_dll.lib ${MKLROOT}/lib/intel64_win/mkl_intel_thread_dll.lib
+      ${MKLROOT}/lib/intel64_win/mkl_core_dll.lib
+    )
+    FILE(COPY
+      ${MKLROOT}/include
+      DESTINATION ${tensorflow_source_dir}/third_party/mkl/
+    )
+  endif()
 endif()
 if(UNIX)
   list(APPEND tensorflow_EXTERNAL_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
