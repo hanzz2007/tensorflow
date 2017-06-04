@@ -26,7 +26,20 @@ limitations under the License.
 #include "tensorflow/core/framework/allocator.h"
 #include "tensorflow/core/platform/mem.h"
 
+#ifdef PLATFORM_WINDOWS
+#define INTEL_DLL_EXPORTS 1
+#endif
+
 #include "third_party/mkl/include/i_malloc.h"
+
+#ifdef PLATFORM_WINDOWS
+// TODO: this is not needed on Linux,
+// need to understand why windows needs it
+i_malloc_t i_malloc;
+i_calloc_t i_calloc;
+i_realloc_t i_realloc;
+i_free_t i_free;
+#endif
 
 namespace tensorflow {
 

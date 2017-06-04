@@ -32,6 +32,7 @@ option(tensorflow_BUILD_PYTHON_TESTS "Build python unit tests " OFF)
 option(tensorflow_BUILD_SHARED_LIB "Build TensorFlow as a shared library" OFF)
 option(tensorflow_OPTIMIZE_FOR_NATIVE_ARCH "Enable compiler optimizations for the native processor architecture (if available)" ON)
 option(tensorflow_WIN_CPU_SIMD_OPTIONS "Enables CPU SIMD instructions")
+option(tensorflow_ENABLE_MKL "Enable MKL support" OFF)
 
 if (NOT WIN32)
   # Threads: defines CMAKE_THREAD_LIBS_INIT and adds -pthread compile option
@@ -235,6 +236,14 @@ if (tensorflow_ENABLE_GPU)
     # add cuda libraries to tensorflow_EXTERNAL_LIBRARIES
     list(APPEND tensorflow_EXTERNAL_LIBRARIES ${CUDA_LIBRARIES})
   endif()
+endif()
+
+if (tensorflow_ENABLE_MKL AND WIN32)
+  include(mkl)
+  add_definitions(-DINTEL_MKL=1)
+  include_directories(${MKL_INSTALL}/include)
+  list(APPEND tensorflow_EXTERNAL_LIBRARIES
+    ${MKL_INSTALL}/lib/libiomp5md.lib ${MKL_INSTALL}/lib/mklml.lib)
 endif()
 
 # Find python executable

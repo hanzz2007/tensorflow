@@ -887,6 +887,12 @@ if(WIN32)
                                      ${CMAKE_CURRENT_BINARY_DIR}/tf_python/tensorflow/python/_pywrap_tensorflow_internal.pyd
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/$(Configuration)/pywrap_tensorflow_internal.lib
                                      ${CMAKE_CURRENT_BINARY_DIR}/tf_python/tensorflow/python/)
+  if(tensorflow_ENABLE_MKL)
+    add_custom_command(TARGET tf_python_build_pip_package POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy ${tensorflow_source_dir}/third_party/mkl/lib/mklml.dll
+                                     ${tensorflow_source_dir}/third_party/mkl/lib/libiomp5md.dll
+                                     ${CMAKE_CURRENT_BINARY_DIR}/tf_python/tensorflow/python/ )
+  endif()
 else()
   add_custom_command(TARGET tf_python_build_pip_package POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/libpywrap_tensorflow_internal.so
@@ -935,3 +941,5 @@ else()
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/tf_python/setup.py bdist_wheel
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tf_python)
 endif(${tensorflow_ENABLE_GPU})
+
+
