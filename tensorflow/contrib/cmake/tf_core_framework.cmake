@@ -88,6 +88,15 @@ endfunction()
 file(GLOB_RECURSE tf_protos_cc_srcs RELATIVE ${tensorflow_source_dir}
     "${tensorflow_source_dir}/tensorflow/core/*.proto"
 )
+if(tensorflow_BUILD_CONTRIB_KERNELS)
+  # Some kernels from contrib that compile via tf_core_kernels_srcs require the header files
+  # from their protos. Include those here.
+  file(GLOB_RECURSE tf_contrib_protos_cc_srcs RELATIVE ${tensorflow_source_dir}
+    "${tensorflow_source_dir}/tensorflow/contrib/boosted_trees/proto/*.proto"
+  )
+  list(APPEND tf_protos_cc_srcs ${tf_contrib_protos_cc_srcs})
+endif()
+
 RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS
     ${tensorflow_source_dir} ${tf_protos_cc_srcs}
 )
