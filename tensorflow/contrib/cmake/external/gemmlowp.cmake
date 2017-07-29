@@ -14,8 +14,8 @@
 # ==============================================================================
 include (ExternalProject)
 
-set(gemmlowp_URL http://github.com/google/gemmlowp/archive/a6f29d8ac48d63293f845f2253eccbf86bc28321.tar.gz)
-set(gemmlowp_HASH SHA256=75d40ea8e68b0d1644f052fffe8f14a410b2a73d40ccb859a95c0578d194ec26)
+set(gemmlowp_URL http://github.com/guschmue/gemmlowp/archive/0c2975bf3b53b935544b4820a2622d8570a0e702.tar.gz)
+set(gemmlowp_HASH SHA256=5706a89cbdbbc24762d78f298c7259a1d6c27cda6b0041d0f35d37564ddd9746)
 set(gemmlowp_BUILD ${CMAKE_CURRENT_BINARY_DIR}/gemmlowp/src/gemmlowp)
 set(gemmlowp_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/gemmlowp/src/gemmlowp)
 

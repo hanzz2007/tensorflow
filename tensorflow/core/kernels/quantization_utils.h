@@ -823,9 +823,9 @@ void QuantizedAddUsingEigen(const Eigen::ThreadPoolDevice& device,
   const int64 input_element_count = input.NumElements();
   const int64 smaller_input_element_count = smaller_input.NumElements();
 
-  QuantizedToFloatStruct<T1> input_q2f(input_min, input_max);
-  QuantizedToFloatStruct<T2> smaller_input_q2f(smaller_input_min,
+  QuantizedToFloatStruct<T1> smaller_input_q2f(smaller_input_min,
                                                smaller_input_max);
+  QuantizedToFloatStruct<T2> input_q2f(input_min, input_max);
   FloatToQuantizedStruct<T3> f2q(*output_min, *output_max);
 
   auto smaller_input_float =
@@ -916,6 +916,16 @@ class TensorflowGemmlowpWorkersPool {
   }
 
   void Wait() { counter_to_decrement_when_ready_.Wait(); }
+
+#ifdef PLATFORM_WINDOWS
+  // since windows support for gemmlowp is only available with newer versions
+  // of gemmlowp, windows has to use newer workerspool api.
+  void Execute(const std::vector<gemmlowp::Task*>& tasks) {
+    for (auto task : tasks) {
+      StartWorker(0, task);
+    }
+  }
+#endif
 
   void StartWorker(int index, gemmlowp::Task* task) {
     CHECK(workers_ != nullptr);
