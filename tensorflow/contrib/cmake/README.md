@@ -20,22 +20,7 @@ for instructions on how to install a pre-built TensorFlow package on Windows.
 * It is not possible to load a custom Op library.
 * GCS file system is not supported.
 * The following Ops are not currently implemented:
- - Dequantize
- - QuantizeAndDequantize
- - QuantizedAvgPool
- - QuantizedBatchNomWithGlobalNormalization
- - QuantizedBiasAdd
- - QuantizedConcat
- - QuantizedConv2D
- - QuantizedMatmul
- - QuantizedMaxPoo
- - QuantizeDownAndShrinkRange
- - QuantizedRelu
- - QuantizedRelu6
- - QuantizedReshape
- - QuantizeV2
- - RequantizationRange
- - Requantize
+ - contrib/boosted_trees
 
 ## Building with CMake
 
@@ -64,7 +49,7 @@ bindings.
 ### Known-good configurations
 
 * Microsoft Windows 10
-  - Microsoft Visual Studio Enterprise 2015 with Visual C++ 2015
+  - Microsoft Visual Studio 2015 with Visual C++ 2015
   - [Anaconda 4.1.1 (Python 3.5 64-bit)](https://www.continuum.io/downloads)
   - [Git for Windows version 2.9.2.windows.1](https://git-scm.com/download/win)
   - [swigwin-3.0.10](http://www.swig.org/download.html)

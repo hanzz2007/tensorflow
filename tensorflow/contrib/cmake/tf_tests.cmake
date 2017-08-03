@@ -142,6 +142,7 @@ if (tensorflow_BUILD_PYTHON_TESTS)
     "${tensorflow_source_dir}/tensorflow/python/debug/wrappers/*_test.py"
     "${tensorflow_source_dir}/tensorflow/python/kernel_tests/*.py"
     "${tensorflow_source_dir}/tensorflow/python/meta_graph_transform/*_test.py"
+    "${tensorflow_source_dir}/tensorflow/python/ops/*_test.py"
     "${tensorflow_source_dir}/tensorflow/python/profiler/*_test.py"
     "${tensorflow_source_dir}/tensorflow/python/profiler/internal/*_test.py"
     "${tensorflow_source_dir}/tensorflow/python/saved_model/*_test.py"
@@ -229,6 +230,12 @@ if (tensorflow_BUILD_PYTHON_TESTS)
       "${tensorflow_source_dir}/tensorflow/contrib/tensor_forest/python/kernel_tests/scatter_add_ndim_op_test.py"  # Bad placement.
       "${tensorflow_source_dir}/tensorflow/contrib/tensor_forest/python/topn_test.py"  # Results inaccurate
       "${tensorflow_source_dir}/tensorflow/python/ops/cloud/bigquery_reader_ops_test.py"  # No libcurl support
+      # python/ops
+      "${tensorflow_source_dir}/tensorflow/python/ops/bitwise_ops_test.py" # int overun
+      "${tensorflow_source_dir}/tensorflow/python/ops/gradients_test.py" # import test_ops fails.
+      "${tensorflow_source_dir}/tensorflow/python/ops/image_ops_test.py" # datafiles missing
+      "${tensorflow_source_dir}/tensorflow/python/ops/nn_batchnorm_test.py" # wants float128 ?
+      "${tensorflow_source_dir}/tensorflow/python/ops/nn_test.py" # above tolerance ?
       # Newly running on Windows since TensorBoard backend move. Fail on Windows and need debug.
       "${tensorflow_source_dir}/tensorflow/contrib/data/python/kernel_tests/dataset_constructor_op_test.py"  # Segfaults on Windows.
   )
