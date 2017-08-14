@@ -918,15 +918,39 @@ class TensorflowGemmlowpWorkersPool {
   void Wait() { counter_to_decrement_when_ready_.Wait(); }
 
 #ifdef PLATFORM_WINDOWS
-  // since windows support for gemmlowp is only available with newer versions
-  // of gemmlowp, windows has to use newer workerspool api.
+  // Windows support for gemmlowp is only available with newer versions of gemmlowp
+  // which uses a newer version of the workerspool api.
+  // Need to implement this for Windows only for now.
   void Execute(const std::vector<gemmlowp::Task*>& tasks) {
-    for (auto task : tasks) {
-      StartWorker(0, task);
-    }
-  }
-#endif
+    assert(tasks.size() >= 1);
+    // One of the tasks will be run on the current thread.
+    int workers_count = (int)tasks.size() - 1;
+    int n = 0;
+    counter_to_decrement_when_ready_.Reset(workers_count);
+    std::for_each(tasks.begin(), --tasks.end(), [this, &n](gemmlowp::Task *task) {
+      workers_->Schedule([this, task]() {
+        gemmlowp::Allocator local_allocator;
+        CHECK(task != nullptr);
+        task->local_allocator = &local_allocator;
+        task->Run();
+        counter_to_decrement_when_ready_.DecrementCount();
+      });
+    });
 
+    // Execute the remaining workload immediately on the current thread.
+    gemmlowp::Task* task = tasks.back();
+    gemmlowp::Allocator local_allocator;
+    task->local_allocator = &local_allocator;
+    task->Run();
+    // Wait for the workers submitted above to finish.
+    counter_to_decrement_when_ready_.Wait();
+    // Cleanup tasks (best to do this from the same thread that allocated
+    // the memory).
+    std::for_each(tasks.begin(), tasks.end(), [](gemmlowp::Task *task) {
+      delete task;
+    });
+  }
+#else
   void StartWorker(int index, gemmlowp::Task* task) {
     CHECK(workers_ != nullptr);
     // <index> is ignored - the tensorflow threadpool does not support assigning
@@ -941,6 +965,7 @@ class TensorflowGemmlowpWorkersPool {
       counter_to_decrement_when_ready_.DecrementCount();
     });
   }
+#endif
 
   void CreateWorkers(std::size_t workers_count) {}
 
