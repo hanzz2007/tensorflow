@@ -823,9 +823,9 @@ void QuantizedAddUsingEigen(const Eigen::ThreadPoolDevice& device,
   const int64 input_element_count = input.NumElements();
   const int64 smaller_input_element_count = smaller_input.NumElements();
 
-  QuantizedToFloatStruct<T1> smaller_input_q2f(smaller_input_min,
+  QuantizedToFloatStruct<T1> input_q2f(input_min, input_max);
+  QuantizedToFloatStruct<T2> smaller_input_q2f(smaller_input_min,
                                                smaller_input_max);
-  QuantizedToFloatStruct<T2> input_q2f(input_min, input_max);
   FloatToQuantizedStruct<T3> f2q(*output_min, *output_max);
 
   auto smaller_input_float =
@@ -897,8 +897,7 @@ void QuantizedAdd(const Eigen::ThreadPoolDevice& device, const Tensor& input,
   }
 }
 
-// See gemmlowp/internal/multi_thread_gemm.h for definitions of
-// Prepare, Wait, StartWorker, and CreateWorkers.
+// See gemmlowp/internal/multi_thread_gemm.h for the semantics of Execute.
 class TensorflowGemmlowpWorkersPool {
  public:
   TensorflowGemmlowpWorkersPool(thread::ThreadPool* workers)
@@ -911,63 +910,25 @@ class TensorflowGemmlowpWorkersPool {
     counter_to_decrement_when_ready_.Reset(0);
   }
 
-  void Prepare(int workers_count) {
-    counter_to_decrement_when_ready_.Reset(workers_count);
-  }
-
-  void Wait() { counter_to_decrement_when_ready_.Wait(); }
-
-#ifdef PLATFORM_WINDOWS
-  // Windows support for gemmlowp is only available with newer versions of gemmlowp
-  // which uses a newer version of the workerspool api.
-  // Need to implement this for Windows only for now.
   void Execute(const std::vector<gemmlowp::Task*>& tasks) {
-    assert(tasks.size() >= 1);
-    // One of the tasks will be run on the current thread.
-    int workers_count = (int)tasks.size() - 1;
-    int n = 0;
-    counter_to_decrement_when_ready_.Reset(workers_count);
-    std::for_each(tasks.begin(), --tasks.end(), [this, &n](gemmlowp::Task *task) {
+    assert(!tasks.empty());
+    assert(workers_ != nullptr);
+    counter_to_decrement_when_ready_.Reset(tasks.size());
+    for (gemmlowp::Task* task : tasks) {
       workers_->Schedule([this, task]() {
+        // TODO(cwhipkey): get a local_allocator from a thread local storage.
         gemmlowp::Allocator local_allocator;
         CHECK(task != nullptr);
         task->local_allocator = &local_allocator;
         task->Run();
         counter_to_decrement_when_ready_.DecrementCount();
       });
-    });
-
-    // Execute the remaining workload immediately on the current thread.
-    gemmlowp::Task* task = tasks.back();
-    gemmlowp::Allocator local_allocator;
-    task->local_allocator = &local_allocator;
-    task->Run();
-    // Wait for the workers submitted above to finish.
+    }
     counter_to_decrement_when_ready_.Wait();
-    // Cleanup tasks (best to do this from the same thread that allocated
-    // the memory).
-    std::for_each(tasks.begin(), tasks.end(), [](gemmlowp::Task *task) {
+    for (gemmlowp::Task* task : tasks) {
       delete task;
-    });
+    }
   }
-#else
-  void StartWorker(int index, gemmlowp::Task* task) {
-    CHECK(workers_ != nullptr);
-    // <index> is ignored - the tensorflow threadpool does not support assigning
-    // to a specific thread.
-    workers_->Schedule([this, task]() {
-      // TODO(cwhipkey): get a local_allocator from a thread local.
-      gemmlowp::Allocator local_allocator;
-      CHECK(task != nullptr);
-      task->local_allocator = &local_allocator;
-      task->Run();
-      delete task;
-      counter_to_decrement_when_ready_.DecrementCount();
-    });
-  }
-#endif
-
-  void CreateWorkers(std::size_t workers_count) {}
 
  private:
   thread::ThreadPool* const workers_;

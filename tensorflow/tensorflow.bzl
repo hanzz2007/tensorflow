@@ -155,6 +155,7 @@ WIN_COPTS = [
     "/Iexternal/gemmlowp",
     "/wd4018", # -Wno-sign-compare
     "/U_HAS_EXCEPTIONS", "/D_HAS_EXCEPTIONS=1", "/EHsc", # -fno-exceptions
+    "/DNOGDI",
 ]
 
 # LINT.IfChange
@@ -164,6 +165,7 @@ def tf_copts():
       "-Iexternal/gemmlowp",
       "-Wno-sign-compare",
       "-fno-exceptions",
+      "-ftemplate-depth=900",
   ]) + if_cuda(["-DGOOGLE_CUDA=1"]) + if_mkl(["-DINTEL_MKL=1", "-fopenmp",]) + if_android_arm(
       ["-mfpu=neon"]) + if_linux_x86_64(["-msse3"]) + select({
           clean_dep("//tensorflow:android"): [
@@ -286,8 +288,8 @@ def tf_gen_op_wrappers_cc(name,
                           override_file=None,
                           include_internal_ops=0,
                           visibility=None):
-  subsrcs = other_srcs
-  subhdrs = other_hdrs
+  subsrcs = other_srcs[:]
+  subhdrs = other_hdrs[:]
   internalsrcs = []
   internalhdrs = []
   for n in op_lib_names:
@@ -1081,7 +1083,7 @@ def tf_py_test(name,
                flaky=0,
                xla_enabled=False):
   if xla_enabled:
-    additional_deps += tf_additional_xla_deps_py()
+    additional_deps = additional_deps + tf_additional_xla_deps_py()
   native.py_test(
       name=name,
       size=size,
